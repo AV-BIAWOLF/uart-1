@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 
 module uart_rx
-    #(parameter CLKS_PER_BIT=868)
+    #(parameter CLKS_PER_BIT=87)
     (
         input clk,
-        input data_in,
+        input data_in = 1,
         output [7:0] byte_recv,
         output recv_valid
     );
@@ -33,8 +33,8 @@ module uart_rx
     reg [9:0] counter = 0;
     reg [7:0] counter_numbers = 0;
     reg [2:0] index = 0;
-    reg       recv_valid_reg = 0;
-    reg [7:0] byte_recv_reg = 0;
+//    reg       recv_valid_reg = 0;
+//    reg [7:0] byte_recv_reg = 0;
     reg       done_reg = 0;
     
     logic nul_num;
