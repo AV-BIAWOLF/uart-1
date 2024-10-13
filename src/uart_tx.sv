@@ -5,7 +5,9 @@
 // (10000000)/(115200) = 87
   
 module uart_tx 
-    #(parameter CLKS_PER_BIT=87)
+//    #(parameter CLKS_PER_BIT=87)
+//    #(parameter CLKS_PER_BIT=868)
+    #(parameter CLKS_PER_BIT = 217)
     (
         input clk,                  // clock signal
         input data_ready,           // data are ready for transmission
@@ -16,20 +18,22 @@ module uart_tx
     );
   
     
-    reg [7:0] counter = 0;
+    (* MARK_DEBUG = "TRUE" *) logic [7:0] counter_TX = 0;
     reg [2:0] index = 0;
     reg       trans_active_reg = 0;
     reg [7:0] byte_trans_reg;
     reg       done_reg = 0;
     
-    // Coding of a column automaton through a binary code
-    enum reg[2:0] {
-        waiting = 3'b001,
-        start = 3'b010,
-        trans_data = 3'b011,
-        stop = 3'b100,
-        done = 3'b101        
+    // Coding of a column automaton through a binary code   
+    enum reg[4:0] {
+        waiting = 5'b00001,
+        start = 5'b00010,
+        trans_data = 5'b00100,
+        stop = 5'b01000,
+        done = 5'b10000        
     } state;
+   
+   
    
     // FSM  
     always @(posedge clk) begin
@@ -46,13 +50,14 @@ module uart_tx
             start:
                 begin
                     data_out <= 0;                      // start bit is starting for beginnig transmission
-                    if (counter < CLKS_PER_BIT) begin   // waiting clocks for transmission the first start bit
-                        counter <= counter + 1;
+//                    if (counter_TX < CLKS_PER_BIT) begin   // waiting clocks for transmission the first start bit
+                    if (counter_TX < 8'd87) begin   // waiting clocks for transmission the first start bit
+                        counter_TX <= counter_TX + 1;
                         byte_trans_reg <= byte_trans;
                         state <= start;
                     end
                     else begin
-                        counter <= 0;
+                        counter_TX <= 0;
                         state <= trans_data;
                         trans_active_reg <= 1;
                     end
@@ -61,11 +66,12 @@ module uart_tx
             trans_data:
                 begin
                     data_out <= byte_trans_reg[index];  // Transmit the current data bit
-                    if (counter < CLKS_PER_BIT) begin
-                        counter <= counter + 1;         // Wait for the current bit to complete
+//                    if (counter_TX < CLKS_PER_BIT) begin
+                    if (counter_TX < 8'd87) begin
+                        counter_TX <= counter_TX + 1;         // Wait for the current bit to complete
                     end
                     else begin
-                        counter <= 0;
+                        counter_TX <= 0;
                         if (index < 7) begin
                             index <= index + 1;         // Move to the next bit
                         end
@@ -78,12 +84,15 @@ module uart_tx
                 
             stop:                                       // Trans stop bit
                 begin
-                    if (counter < CLKS_PER_BIT) begin
+//                    if (counter_TX < CLKS_PER_BIT) begin
+                    if (counter_TX < 8'd87) begin
                         data_out <= 1'b1;
-                        counter <= counter + 1;
+                        counter_TX <= counter_TX + 1;
                     end
-                    else begin
-                        counter <= 0;
+                    else 
+                        if (counter_TX == 8'd87) begin
+//                        if (counter_TX < CLKS_PER_BIT) begin
+                        counter_TX <= 0;
                         trans_active_reg <= 0;
                         done_reg <= 1;
                         state <= done;
@@ -100,6 +109,7 @@ module uart_tx
                 
         endcase                   
     end
+    
    
     assign trans_active = trans_active_reg;
     assign done_sig = done_reg;
