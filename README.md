@@ -6,11 +6,13 @@ This repository contains a UART (Universal Asynchronous Receiver/Transmitter) de
 srs:
 - **uart_tx.sv**: The UART transmitter module, responsible for sending data.
 - **uart_rx.sv**: The UART receiver module, responsible for receiving data.
+- **uart_arb_tb.sv**: The UART arbiter controls the process of sending data from the FPGA to the computer.
 
 testbench:
 - **uart_tb.sv**: The testbench used to verify the design by simulating data transmission between the transmitter and receiver.
 - **uart_tx.sv**: The testbench used to verify only Transmitter.
 - **uart_rx.sv**: The testbench used to verify only Receiver.
+- **uart_arb_tb.sv**: The testbench used to verify only Arbiter.
 
 log (log files as a result of design):
 - **runme.log**.
@@ -53,6 +55,17 @@ The UART receiver (`uart_rx`) receives serial data, decodes the start, data, and
 - **recive**: Receives the 8-bit data, one bit at a time.
 - **stop**: Verifies the stop bit.
 - **done**: Marks the completion of reception.
+
+### UART Arbiter (`uart_arb.sv`) and Testbench Arbiter (`uart_arb_tb.sv`)
+This project includes two SystemVerilog files: uart_arb.sv and uart_arb_tb.sv, designed to facilitate data transmission between an FPGA and a computer via UART.
+
+- `uart_arb.sv`:
+This file contains the RTL description of a UART arbiter, which coordinates the data transfer between an FPGA and the computer. The arbiter manages data flow by interacting with two UART interfaces—transmitter and receiver—ensuring efficient communication. The design includes a finite state machine (FSM) that controls the process of sending data from the FPGA to the computer.
+
+- `uart_arb_tb.sv`:
+The testbench simulates the UART arbiter to verify its functionality. It includes stimulus generation and monitoring of the data transfer. The testbench ensures that the communication is successfully carried out as expected, allowing for debugging and validation before deployment on FPGA.
+
+Both files are used to connect the FPGA to a computer via PuTTY, where data is transmitted using the UART protocol. The finite state machine within the arbiter handles the sending and receiving of data
 
 **Parameters**:
 - `CLKS_PER_BIT`: Defines the number of clock cycles per bit, matching the transmitter's baud rate.
