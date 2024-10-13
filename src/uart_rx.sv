@@ -1,12 +1,16 @@
 `timescale 1ns / 1ps
 
 module uart_rx
-    #(parameter CLKS_PER_BIT=87)
+//    #(parameter CLKS_PER_BIT=868)  // 868
+//    #(parameter CLKS_PER_BIT=87)  // 
+    #(parameter CLKS_PER_BIT = 217)
     (
         input clk,
         input data_in = 1,
         output [7:0] byte_recv,
         output recv_valid
+        
+        
     );
     
     reg data_in_reg_1;
@@ -30,7 +34,7 @@ module uart_rx
         done    = 3'b101
     }state;
     
-    reg [9:0] counter = 0;
+    reg [9:0] counter_RX = 0;
     reg [7:0] counter_numbers = 0;
     reg [2:0] index = 0;
 //    reg       recv_valid_reg = 0;
@@ -52,15 +56,15 @@ module uart_rx
                 
             start:
                begin
-                    counter <= counter + 1;
+                    counter_RX <= counter_RX + 1;
                     // Fix the value at the middle of the period
-                    if (counter == (CLKS_PER_BIT - 1) / 2) begin   
+                    if (counter_RX == (CLKS_PER_BIT - 1) / 2) begin   
                         nul_num <= data_in_reg_2;  // Save the value of data_in_reg_2
                     end
                     // At the end of the full period we check the value
-                    if (counter == (CLKS_PER_BIT - 1)) begin     
+                    if (counter_RX == (CLKS_PER_BIT - 1)) begin     
                         if (nul_num == 1'b0) begin
-                            counter <= 0; // Resetting the counter
+                            counter_RX <= 0; // Resetting the counter
                             state   <= recive; // Moving to the next state
                         end else begin
                             state <= waiting; // If not 0, we go back to waiting
@@ -70,12 +74,12 @@ module uart_rx
     
             recive:
                 begin
-                    if (counter < CLKS_PER_BIT) begin   
-                            counter <= counter + 1;
+                    if (counter_RX < CLKS_PER_BIT) begin   
+                            counter_RX <= counter_RX + 1;
                             state <= recive; 
                         end
                     else begin 
-                        counter <= 0;
+                        counter_RX <= 0;
                         byte_recv_reg[index] <= data_in_reg_2;
                         if (index < 7) begin  
                             index <= index + 1;
@@ -91,15 +95,15 @@ module uart_rx
             stop:
                 begin
                     // Wait CLKS_PER_BIT-1 clock cycles for Stop bit to finish
-                    if (counter < CLKS_PER_BIT) begin // -1
-                        counter <= counter + 1;
+                    if (counter_RX < CLKS_PER_BIT) begin // -1
+                        counter_RX <= counter_RX + 1;
                     end else begin
                         if (data_in_reg_2 == 1) begin   // Checking that the stop bit (1) has completed
                             recv_valid_reg <= 1;        // Data correctly accepted
-                            counter <= 0;               // Resetting the counter
+                            counter_RX <= 0;               // Resetting the counter
                             state <= done;              // Moving towards completion
                         end else begin
-                            counter <= 0;               // If the stop bit is incorrect, reset the counter
+                            counter_RX <= 0;               // If the stop bit is incorrect, reset the counter
                             state <= waiting;           // Back to waiting
                         end
                     end
